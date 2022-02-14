@@ -10,7 +10,7 @@ jobs:
   release:
     strategy:
       matrix:
-        os: [ubuntu-latest macos-latest]
+        os: [ubuntu-latest, macos-latest]
         gu-binary: [gu]
         include: 
           - os: ubuntu-latest
@@ -19,7 +19,9 @@ jobs:
           - os: macos-latest
             native-image: native-image
             version: darwin-amd64
+
     runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v2
 
