@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: commit changes
-      - uses: actions/checkout@v2
-      - run: |
+        uses: actions/checkout@v2
+        run: |
           lein project-version > VERSION.md
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -19,7 +19,7 @@ jobs:
           git commit -m "generated"
 
       - name: push changes
-      uses: ad-m/github-push-action@master
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        branch: ${{ github.ref }}
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
