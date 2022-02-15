@@ -6,22 +6,29 @@ on:
       - 'project.clj'
       - '.github/workflows/release.yml'
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   release:
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         gu-binary: [gu]
         include: 
           - os: ubuntu-latest
             native-image: native-image
             version: linux-amd64
+          - os: macos-latest
+            native-image: native-image
+            version: darwin-amd64
 
     runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Prepare java
         uses: actions/setup-java@v2
         with:
@@ -66,17 +73,30 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           files: clj-holmes-${{ matrix.os }}
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Retrieve version
+        run: echo "TAG_NAME=v$(lein project-version)" >> $GITHUB_ENV
+        if: matrix.os == 'ubuntu-latest'
 
-      - name: Build and push
-        uses: docker/build-push-action@v2
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
         with:
-          context: ./
-          file: ./Dockerfile
-          builder: ${{ steps.buildx.outputs.name }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+        if: matrix.os == 'ubuntu-latest'
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        if: matrix.os == 'ubuntu-latest'
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/rancorzinho:latest
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+        if: matrix.os == 'ubuntu-latest'
