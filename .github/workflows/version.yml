@@ -9,8 +9,9 @@ jobs:
   update-version-file:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+
       - name: commit changes
-        uses: actions/checkout@v2
         run: |
           lein project-version > VERSION.md
           git config user.name github-actions
